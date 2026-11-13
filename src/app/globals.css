@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+  background: #ffffff;
+  color: #07070a;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+canvas {
+  touch-action: none;
+  cursor: grab;
+}
+canvas:active {
+  cursor: grabbing;
+}
+
+*:focus-visible {
+  outline: 2px solid #c9821a;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+@layer components {
+  .panel {
+    @apply rounded-2xl border border-black/[0.07] bg-white/85 shadow-[0_12px_40px_-14px_rgba(40,30,10,0.25)] backdrop-blur-xl;
+  }
+  .icon-btn {
+    @apply grid h-9 w-9 place-items-center rounded-xl border border-black/[0.08] bg-white/80 text-ink-800/75 backdrop-blur-xl transition hover:border-black/20 hover:text-ink-950;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-1.5 rounded-lg border border-black/10 px-2.5 py-1.5 text-[12px] text-ink-800/80 transition hover:border-honey-400 hover:text-ink-950;
+  }
+  .select {
+    @apply h-9 rounded-xl border border-black/[0.08] bg-white/80 px-2.5 text-[12px] text-ink-800/80 backdrop-blur-xl;
+  }
+  /* all structure buttons visible at once: wrap onto extra rows, centred */
+  .chip-row {
+    @apply flex w-full flex-wrap justify-center gap-1.5;
+  }
+  .chip {
+    @apply inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-black/[0.08] bg-white/85 px-2.5 py-1 text-[11.5px] sm:px-3 sm:py-1.5 sm:text-[12px] text-ink-800/80 backdrop-blur-xl transition hover:border-honey-400 hover:text-ink-950;
+  }
+  .chip-active {
+    @apply border-honey-400 bg-honey-100 text-honey-700;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full border border-black/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-ink-700/70;
+  }
+  .badge-warn {
+    @apply border-honey-400/70 bg-honey-50 text-honey-700;
+  }
+  .toggle {
+    @apply relative h-4 w-7 shrink-0 cursor-pointer appearance-none rounded-full bg-black/15 transition;
+  }
+  .toggle::after {
+    content: '';
+    @apply absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-white transition;
+  }
+  .toggle:checked {
+    @apply bg-honey-400;
+  }
+  .toggle:checked::after {
+    @apply translate-x-3;
+  }
+  .popout {
+    @apply rounded-l-2xl border border-r-0 border-black/[0.07] bg-white/90 shadow-[0_12px_40px_-14px_rgba(40,30,10,0.3)] backdrop-blur-xl;
+  }
+  .popout-tab {
+    @apply absolute -left-8 top-1/2 flex h-16 w-8 -translate-y-1/2 flex-col items-center justify-center gap-1 rounded-l-xl border border-r-0 border-black/[0.07] bg-white/90 text-ink-800/70 backdrop-blur-xl transition hover:text-ink-950;
+  }
+}
+
+/* ---------- anatomy markers (rendered via drei <Html>) ---------- */
+.marker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transform: translate(9px, 0);
+  background: none;
+  border: 0;
+  padding: 4px;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+.marker[data-behind='1'] {
+  opacity: 0.28;
+}
+.marker-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: #e5a12a;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 3px rgba(229, 161, 42, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+.marker-label {
+  white-space: nowrap;
+  font-size: 11.5px;
+  line-height: 1;
+  color: rgba(13, 13, 17, 0.85);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 14px -6px rgba(40, 30, 10, 0.25);
+  padding: 5px 8px;
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all 0.25s;
+}
+.marker-num {
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  color: #c9821a;
+  margin-right: 6px;
+}
+.marker:hover .marker-label,
+.marker:focus-visible .marker-label,
+.marker-active .marker-label {
+  opacity: 1;
+  transform: none;
+}
+.marker-active .marker-dot {
+  background: #07070a;
+}
+@media (hover: none) {
+  .marker-label {
+    opacity: 0.9;
+    transform: none;
+    font-size: 10.5px;
+  }
+}
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(229, 161, 42, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(229, 161, 42, 0.08), 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+}
+
+.loader-pulse {
+  animation: breathe 2.2s ease-in-out infinite;
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
