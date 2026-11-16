@@ -50,5 +50,11 @@ Ported from the Lovable build at commit f67cd44 so this source matches the live 
 
 - Anatomy labels start hidden on every device. A "Show labels / Hide labels" button sits under the header on desktop and top-left on phones.
 - Phones: details open as a bottom drawer that tucks down to a tab; the whole bee stays framed above it.
-- The selected part turns red, and its original colours come back when deselected.
 - Automatic quality changes no longer rebuild the bee or reset its pose.
+
+## Model changes made on 16 November 2026 (Ben's local copy)
+
+- Scutellum and tegulae (wing-base covers) removed; the propodeum sits inside the thorax outline so it no longer pokes through the hair.
+- Labrum uses the clypeus material.
+- Compound eyes are bare: the interfacetal eye hairs are gone and face hair that would lie across an eye is filtered out. The eye fact no longer says the eyes are hairy.
+- Highlight: hovering gives a soft honey glow; a selected part glows red (procedural and GLB rigs).

@@ -140,7 +140,8 @@ export function adaptGltfToRig(gltf: GltfLike): BeeRig & { mixer: THREE.Animatio
   };
 
   const black = new THREE.Color(0);
-  const honey = new THREE.Color('#ffb02e');
+  const honey = new THREE.Color('#ffb02e'); // hover
+  const red = new THREE.Color('#e3261c'); // selected
   let last: AnatomyId | null = null;
 
   return {
@@ -154,13 +155,13 @@ export function adaptGltfToRig(gltf: GltfLike): BeeRig & { mixer: THREE.Animatio
     apply,
     mixer,
     playClip,
-    setHighlight: (id, pulse) => {
+    setHighlight: (id, pulse, selected = false) => {
       if (last && last !== id) for (const m of partMaterials[last] ?? []) (m as THREE.MeshStandardMaterial).emissive?.copy(black);
       last = id;
       if (id) for (const m of partMaterials[id] ?? []) {
         const s = m as THREE.MeshStandardMaterial;
-        s.emissive?.copy(honey);
-        s.emissiveIntensity = 0.18 + 0.22 * pulse;
+        s.emissive?.copy(selected ? red : honey);
+        s.emissiveIntensity = selected ? 0.55 + 0.3 * pulse : 0.18 + 0.22 * pulse;
       }
     },
     setBodyPollenVisible: (v) => {

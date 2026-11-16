@@ -15,7 +15,7 @@ export const ANATOMY: AnatomyEntry[] = [
     purpose:
       'Each eye is built from thousands of tiny optical units called ommatidia. Together they give a wide, mosaic view that is excellent at detecting movement, colour contrast and patterns on flowers.',
     fact:
-      'Honey bees see ultraviolet light but are relatively insensitive to red, and specialised facets along the top edge of each eye detect polarised skylight, helping them navigate even when the sun is hidden. The eyes are also covered in fine hairs.',
+      'Honey bees see ultraviolet light but are relatively insensitive to red, and specialised facets along the top edge of each eye detect polarised skylight, helping them navigate even when the sun is hidden.',
     view: { offset: [0.9, 0.25, 0.75], distance: 1.25 },
     review: 'literature-checked',
     modelNote: 'Facets are a procedural normal map; facet count and eye outline are approximate.',

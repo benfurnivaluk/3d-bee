@@ -37,8 +37,7 @@ export function BeeModel({ lod, ghosts, interactive = false, seed = 1, onRig }: 
   useFrame(({ clock }) => {
     if (!interactive) return;
     const { selected, hovered } = useBeeStore.getState();
-    const id = selected ?? hovered;
-    rig.setHighlight(id, 0.5 + 0.5 * Math.sin(clock.elapsedTime * 4));
+    rig.setHighlight(selected ?? hovered, 0.5 + 0.5 * Math.sin(clock.elapsedTime * 4), selected !== null);
   });
 
   const idOf = (e: ThreeEvent<PointerEvent | MouseEvent>): AnatomyId | null => {
@@ -112,7 +111,7 @@ export function GltfBeeModel({ url, onRig }: { url: string; onRig?: (rig: BeeRig
   useFrame(({ clock }) => {
     const s = useBeeStore.getState();
     rig.playClip('idle', clock.elapsedTime); // authored idle clip, if the asset has one
-    rig.setHighlight(s.selected ?? s.hovered, 0.5 + 0.5 * Math.sin(clock.elapsedTime * 4));
+    rig.setHighlight(s.selected ?? s.hovered, 0.5 + 0.5 * Math.sin(clock.elapsedTime * 4), s.selected !== null);
   });
   return <primitive object={rig.root} />;
 }

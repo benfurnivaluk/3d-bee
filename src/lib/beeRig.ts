@@ -64,7 +64,8 @@ export interface BeeRig {
   proboscisTip: THREE.Object3D;
   partMaterials: Partial<Record<AnatomyId, THREE.Material[]>>;
   apply: (pose: Pose) => void;
-  setHighlight: (id: AnatomyId | null, pulse: number) => void;
+  /** selected = true paints the structure red; otherwise a soft honey hover glow */
+  setHighlight: (id: AnatomyId | null, pulse: number, selected?: boolean) => void;
   setBodyPollenVisible: (v: number) => void;
   dispose: () => void;
 }
@@ -407,21 +408,13 @@ export function buildBeeRig(opts: BeeRigOptions): BeeRig {
   const thoraxMesh = mesh(thoraxGeo, M.thorax, 'thorax');
   thoraxMesh.position.set(0, 0.05, 0.3);
   body.add(thoraxMesh);
-  const scutellum = mesh(ellipsoid(0.2, 0.09, 0.11, seg(24)), M.thorax, 'thorax');
-  scutellum.position.set(0, 0.37, 0.02);
-  body.add(scutellum);
   const pronotum = mesh(ellipsoid(0.27, 0.24, 0.1, seg(24)), M.thorax, 'thorax');
   pronotum.position.set(0, 0.02, 0.72);
   body.add(pronotum);
-  const propodeum = mesh(ellipsoid(0.26, 0.24, 0.12, seg(24)), M.thorax, 'thorax');
-  propodeum.position.set(0, 0.06, -0.12);
+  // propodeum: kept below the thoracic outline so it never pokes through the pile
+  const propodeum = mesh(ellipsoid(0.24, 0.16, 0.12, seg(24)), M.thorax, 'thorax');
+  propodeum.position.set(0, 0.0, -0.12);
   body.add(propodeum);
-  // tegulae (wing base covers)
-  for (const sx of [1, -1]) {
-    const teg = mesh(ellipsoid(0.05, 0.03, 0.07, 12), M.mandibles, 'thorax');
-    teg.position.set(0.3 * sx, 0.33, 0.54);
-    body.add(teg);
-  }
   // thoracic spiracle (propodeal)
   for (const sx of [1, -1]) {
     const sp = mesh(new THREE.CircleGeometry(0.014, 12), M.spiracles, 'spiracles');
@@ -460,7 +453,7 @@ export function buildBeeRig(opts: BeeRigOptions): BeeRig {
   const clyp = mesh(ellipsoid(0.12, 0.08, 0.04, 16), M.clypeus, null);
   clyp.position.set(0, -0.16, 0.34);
   head.add(clyp);
-  const labrum = mesh(ellipsoid(0.07, 0.035, 0.03, 12), M.mandibles, null);
+  const labrum = mesh(ellipsoid(0.07, 0.035, 0.03, 12), M.clypeus, null);
   labrum.position.set(0, -0.25, 0.33);
   head.add(labrum);
 
@@ -990,7 +983,7 @@ export function buildBeeRig(opts: BeeRigOptions): BeeRig {
       ),
     );
     // face + vertex hair (not on the eyes)
-    const headHair = sampleEllipsoid(
+    const headHairAll = sampleEllipsoid(
       Math.round(3200 * hairMul),
       HEAD_C,
       HEAD_R,
@@ -998,12 +991,20 @@ export function buildBeeRig(opts: BeeRigOptions): BeeRig {
       (d) => Math.abs(d.x) < 0.55 || d.y > 0.75 || d.z < -0.2,
       headDeform,
     );
-    head.add(tag(makeHair(headHair, { len: [0.04, 0.12], thick: 0.003, color: '#b8975f', jitter: 0.7, bias: new THREE.Vector3(0, -0.15, 0.1), rnd }, M.hairGold), null));
-    // sparse interfacetal hairs on the compound eyes
-    eyes.forEach((e) => {
-      const eh = sampleEllipsoid(Math.round(220 * hairMul), new THREE.Vector3(), new THREE.Vector3(0.1, 0.27, 0.14), rnd, (d) => d.x > 0.1);
-      e.add(tag(makeHair(eh, { len: [0.02, 0.035], thick: 0.0022, color: '#8a6a44', jitter: 0.3, rnd }, M.hairGold), 'compoundEyes'));
+    // keep the compound eyes bare: drop any face hair rooted on or long enough to lie across an eye
+    const eyeInv = eyes.map((e) => {
+      e.updateMatrix();
+      return new THREE.Matrix4().copy(e.matrix).invert();
     });
+    const tmpP = new THREE.Vector3();
+    const headHair = headHairAll.filter((h) =>
+      eyeInv.every((inv) => {
+        tmpP.copy(h.p).applyMatrix4(inv);
+        const m = 0.14; // clearance ≈ longest face hair
+        return (tmpP.x / (0.1 + m)) ** 2 + (tmpP.y / (0.27 + m)) ** 2 + (tmpP.z / (0.14 + m)) ** 2 > 1;
+      }),
+    );
+    head.add(tag(makeHair(headHair, { len: [0.04, 0.12], thick: 0.003, color: '#b8975f', jitter: 0.7, bias: new THREE.Vector3(0, -0.15, 0.1), rnd }, M.hairGold), null));
     // legs coxae/femora hair on the underside of thorax
     const under = sampleEllipsoid(Math.round(1800 * hairMul), new THREE.Vector3(0, 0.0, 0.3), new THREE.Vector3(0.36, 0.34, 0.42), rnd, (d) => d.y < -0.3);
     body.add(tag(makeHair(under, { len: [0.06, 0.14], thick: 0.003, color: '#d2b98a', jitter: 0.6, rnd }, M.hairGold), 'thorax'));
@@ -1149,26 +1150,14 @@ export function buildBeeRig(opts: BeeRigOptions): BeeRig {
     for (const im of bodyPollen) im.count = Math.floor((im.userData.max as number) * THREE.MathUtils.clamp(v, 0, 1));
   }
 
-  const selectionRed = new THREE.Color('#d62323');
+  const honey = new THREE.Color('#ffb02e'); // hover
+  const red = new THREE.Color('#e3261c'); // selected
   const black = new THREE.Color('#000000');
-  const originalColours = new Map<THREE.MeshStandardMaterial, { color: THREE.Color; vertexColors: boolean }>();
-  for (const materials of Object.values(partMaterials)) {
-    for (const material of materials ?? []) {
-      const m = material as THREE.MeshStandardMaterial;
-      originalColours.set(m, { color: m.color.clone(), vertexColors: m.vertexColors });
-    }
-  }
   let lastHighlight: AnatomyId | null = null;
-  const setHighlight = (id: AnatomyId | null, pulse: number) => {
+  const setHighlight = (id: AnatomyId | null, pulse: number, selected = false) => {
     if (lastHighlight && lastHighlight !== id) {
       for (const m of partMaterials[lastHighlight] ?? []) {
         const mm = m as THREE.MeshStandardMaterial;
-        const original = originalColours.get(mm);
-        if (original) {
-          mm.color.copy(original.color);
-          mm.vertexColors = original.vertexColors;
-          mm.needsUpdate = true;
-        }
         mm.emissive.copy(black);
         mm.emissiveIntensity = 0;
       }
@@ -1177,13 +1166,8 @@ export function buildBeeRig(opts: BeeRigOptions): BeeRig {
     if (!id) return;
     for (const m of partMaterials[id] ?? []) {
       const mm = m as THREE.MeshStandardMaterial;
-      mm.color.copy(selectionRed);
-      mm.emissive.copy(selectionRed);
-      if (mm.vertexColors) {
-        mm.vertexColors = false;
-        mm.needsUpdate = true;
-      }
-      mm.emissiveIntensity = 0.35 + 0.15 * pulse;
+      mm.emissive.copy(selected ? red : honey);
+      mm.emissiveIntensity = selected ? 0.55 + 0.3 * pulse : 0.18 + 0.22 * pulse;
     }
   };
 
