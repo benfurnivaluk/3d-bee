@@ -19,8 +19,12 @@ export default function BeeExplorer() {
   const [webgl, setWebgl] = useState<'checking' | 'ok' | 'none'>('checking');
   const setReducedMotion = useBeeStore((s) => s.setReducedMotion);
   const setAutoLevel = useBeeStore((s) => s.setAutoLevel);
+  const selected = useBeeStore((s) => s.selected);
+  const labelsOn = useBeeStore((s) => s.labelsOn);
+  const detailsTucked = useBeeStore((s) => s.detailsTucked);
 
   useEffect(() => {
+    useBeeStore.setState({ loaded: false, selected: null, textViewOpen: false, soundOn: false, labelsOn: false, detailsTucked: false });
     setWebgl(detectWebGL().ok ? 'ok' : 'none');
     setAutoLevel(initialQuality());
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -52,9 +56,15 @@ export default function BeeExplorer() {
   }
 
   return (
-    <main className="fixed inset-0 overflow-hidden bg-white text-ink-950" aria-label="BeeRadar honey bee explorer">
+    <main
+      className="bee-explorer fixed inset-0 overflow-hidden bg-white text-ink-950"
+      data-selected={!!selected}
+      data-details-open={!!selected && !detailsTucked}
+      data-labels={labelsOn}
+      aria-label="BeeRadar honey bee explorer"
+    >
       <h1 className="sr-only">The Honey Bee — Explore its Anatomy</h1>
-      <div className="absolute inset-0">{webgl === 'ok' && <Scene />}</div>
+      <div className="bee-scene-frame absolute inset-0">{webgl === 'ok' && <Scene />}</div>
       <ExplorerUI />
       <LoadingScreen />
     </main>

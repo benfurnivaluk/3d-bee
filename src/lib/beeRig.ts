@@ -1149,13 +1149,26 @@ export function buildBeeRig(opts: BeeRigOptions): BeeRig {
     for (const im of bodyPollen) im.count = Math.floor((im.userData.max as number) * THREE.MathUtils.clamp(v, 0, 1));
   }
 
-  const honey = new THREE.Color('#ffb02e');
+  const selectionRed = new THREE.Color('#d62323');
   const black = new THREE.Color('#000000');
+  const originalColours = new Map<THREE.MeshStandardMaterial, { color: THREE.Color; vertexColors: boolean }>();
+  for (const materials of Object.values(partMaterials)) {
+    for (const material of materials ?? []) {
+      const m = material as THREE.MeshStandardMaterial;
+      originalColours.set(m, { color: m.color.clone(), vertexColors: m.vertexColors });
+    }
+  }
   let lastHighlight: AnatomyId | null = null;
   const setHighlight = (id: AnatomyId | null, pulse: number) => {
     if (lastHighlight && lastHighlight !== id) {
       for (const m of partMaterials[lastHighlight] ?? []) {
         const mm = m as THREE.MeshStandardMaterial;
+        const original = originalColours.get(mm);
+        if (original) {
+          mm.color.copy(original.color);
+          mm.vertexColors = original.vertexColors;
+          mm.needsUpdate = true;
+        }
         mm.emissive.copy(black);
         mm.emissiveIntensity = 0;
       }
@@ -1164,8 +1177,13 @@ export function buildBeeRig(opts: BeeRigOptions): BeeRig {
     if (!id) return;
     for (const m of partMaterials[id] ?? []) {
       const mm = m as THREE.MeshStandardMaterial;
-      mm.emissive.copy(honey);
-      mm.emissiveIntensity = 0.18 + 0.22 * pulse;
+      mm.color.copy(selectionRed);
+      mm.emissive.copy(selectionRed);
+      if (mm.vertexColors) {
+        mm.vertexColors = false;
+        mm.needsUpdate = true;
+      }
+      mm.emissiveIntensity = 0.35 + 0.15 * pulse;
     }
   };
 

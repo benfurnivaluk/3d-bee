@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ANATOMY, ANATOMY_BY_ID } from '@/data/beeAnatomy';
 import { useBeeStore } from '@/store/beeExplorerStore';
@@ -64,25 +64,51 @@ export function AnatomyPanel() {
   const select = useBeeStore((s) => s.select);
   const showStinger = useBeeStore((s) => s.showStinger);
   const setShowStinger = useBeeStore((s) => s.setShowStinger);
+  const reducedMotion = useBeeStore((s) => s.reducedMotion);
   const ref = useRef<HTMLElement>(null);
-  const [tucked, setTucked] = useState(false);
+  const tucked = useBeeStore((s) => s.detailsTucked);
+  const setTucked = useBeeStore((s) => s.setDetailsTucked);
   const entry = selected ? ANATOMY_BY_ID[selected] : null;
 
   // slide in whenever a new structure is chosen
   useEffect(() => {
-    if (!ref.current || !entry) return;
-    setTucked(false);
-    gsap.fromTo(ref.current, { xPercent: 100 }, { xPercent: 0, duration: 0.5, ease: 'power3.out' });
-  }, [entry]);
+    const el = ref.current;
+    if (!el || !entry) return;
+    // phones: the details are a drawer that rises from the bottom; larger screens: a card from the right
+    const mobile = window.matchMedia('(max-width: 639px)').matches;
+    gsap.fromTo(
+      el,
+      { xPercent: mobile ? 0 : 100, yPercent: mobile ? 100 : -50, y: 0 },
+      { xPercent: 0, yPercent: mobile ? 0 : -50, duration: reducedMotion ? 0 : 0.5, ease: 'power3.out' },
+    );
+    return () => {
+      gsap.killTweensOf(el);
+    };
+  }, [entry, reducedMotion]);
 
   const tuck = (t: boolean) => {
     setTucked(t);
-    if (ref.current) gsap.to(ref.current, { xPercent: t ? 100 : 0, duration: 0.4, ease: 'power3.inOut' });
+    if (ref.current) {
+      const mobile = window.matchMedia('(max-width: 639px)').matches;
+      gsap.to(ref.current, {
+        xPercent: mobile ? 0 : t ? 100 : 0,
+        y: mobile && t ? Math.max(0, ref.current.offsetHeight - 48) : 0,
+        duration: reducedMotion ? 0 : 0.4,
+        ease: 'power3.inOut',
+      });
+    }
   };
   // closing slides the card out; deselecting returns the camera to the full view (see store)
   const close = () => {
     if (!ref.current) return select(null);
-    gsap.to(ref.current, { xPercent: 100, duration: 0.3, ease: 'power2.in', onComplete: () => select(null) });
+    const mobile = window.matchMedia('(max-width: 639px)').matches;
+    gsap.to(ref.current, {
+      xPercent: mobile ? 0 : 100,
+      yPercent: mobile ? 100 : -50,
+      duration: reducedMotion ? 0 : 0.3,
+      ease: 'power2.in',
+      onComplete: () => select(null),
+    });
   };
 
   if (!entry) return null;
@@ -93,6 +119,7 @@ export function AnatomyPanel() {
       ref={ref}
       aria-live="polite"
       aria-label={`${entry.name} details`}
+      data-tucked={tucked}
       className="popout pointer-events-auto absolute right-0 top-1/2 w-[17rem] max-w-[82vw] -translate-y-1/2"
     >
       {/* edge tab: tuck away / bring back */}
@@ -107,7 +134,7 @@ export function AnatomyPanel() {
         <span className="font-mono text-[10px]">{String(idx + 1).padStart(2, '0')}</span>
       </button>
 
-      <div className="max-h-[70vh] overflow-y-auto p-4" inert={tucked || undefined}>
+      <div className="bee-details-content max-h-[70vh] overflow-y-auto p-4" inert={tucked || undefined}>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="truncate font-mono text-[9.5px] uppercase tracking-[0.18em] text-honey-600">{entry.subject}</p>

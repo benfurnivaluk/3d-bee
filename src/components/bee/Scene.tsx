@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { AdaptiveDpr, PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
@@ -25,6 +25,8 @@ export function Scene() {
   const setLoaded = useBeeStore((s) => s.setLoaded);
   const auto = useBeeStore((s) => s.quality === 'auto');
   const q = QUALITY[quality];
+  // Automatic resolution adjustments must not rebuild the specimen or reset its pose.
+  const [modelLod] = useState(q.lod);
 
   const step = (dir: -1 | 1) => {
     if (!auto) return;
@@ -53,7 +55,7 @@ export function Scene() {
       <AdaptiveDpr pixelated={false} />
       <Suspense fallback={null}>
         <BeeLighting shadows={q.shadows} />
-        <BeeAnimator key={quality} lod={q.lod} />
+        <BeeAnimator lod={modelLod} />
         <AnatomyMarkers />
       </Suspense>
       <BeeCamera />

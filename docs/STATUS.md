@@ -6,7 +6,7 @@ Last updated: 13 Nov 2026
 
 The explorer was simplified on 13 Nov 2026 to **anatomy only, on a white background**. The behaviours, environments, cinematic mode and sound have been removed.
 The app works: rotation, zoom, 16 anatomy markers, click-to-identify, focus and the details panel.
-The **bee itself is a temporary procedural model**. It does **not** meet the photorealism or full anatomical-accuracy target, and is labelled "Temporary model" in the UI. Meeting that target depends on the asset in `ASSET_SPEC.md`.
+The **bee itself is a temporary procedural model**. It does **not** meet the photorealism or full anatomical-accuracy target. The "Temporary model" badge has been removed from the UI. Meeting that target depends on the asset in `ASSET_SPEC.md`.
 
 ## Feature status
 
@@ -43,3 +43,12 @@ The **bee itself is a temporary procedural model**. It does **not** meet the pho
 2. Set `NEXT_PUBLIC_BEE_MODEL_URL`, then validate `gltfRig.ts` bone axes against the real rig.
 3. Have an apiologist review the anatomy text, venation and leg structures.
 4. Run device QA on real phones and tablets.
+
+## Changes synced from the BeeRadar site (16 November 2026)
+
+Ported from the Lovable build at commit f67cd44 so this source matches the live explorer:
+
+- Anatomy labels start hidden on every device. A "Show labels / Hide labels" button sits under the header on desktop and top-left on phones.
+- Phones: details open as a bottom drawer that tucks down to a tab; the whole bee stays framed above it.
+- The selected part turns red, and its original colours come back when deselected.
+- Automatic quality changes no longer rebuild the bee or reset its pose.

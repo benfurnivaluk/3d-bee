@@ -14,6 +14,8 @@ export interface BeeExplorerState {
   loaded: boolean;
   textViewOpen: boolean;
   soundOn: boolean;
+  labelsOn: boolean;
+  detailsTucked: boolean;
 
   selected: AnatomyId | null;
   hovered: AnatomyId | null;
@@ -26,6 +28,8 @@ export interface BeeExplorerState {
   setLoaded: (b: boolean) => void;
   setTextView: (b: boolean) => void;
   toggleSound: () => void;
+  toggleLabels: () => void;
+  setDetailsTucked: (tucked: boolean) => void;
   select: (id: AnatomyId | null, focus?: boolean) => void;
   setHovered: (id: AnatomyId | null) => void;
   setShowStinger: (b: boolean) => void;
@@ -39,6 +43,8 @@ export const useBeeStore = create<BeeExplorerState>((set, get) => ({
   loaded: false,
   textViewOpen: false,
   soundOn: false, // muted until the visitor opts in (autoplay rules)
+  labelsOn: false, // anatomy labels start hidden on every device
+  detailsTucked: false,
 
   selected: null,
   hovered: null,
@@ -51,9 +57,15 @@ export const useBeeStore = create<BeeExplorerState>((set, get) => ({
   setLoaded: (b) => set({ loaded: b }),
   setTextView: (b) => set({ textViewOpen: b }),
   toggleSound: () => set({ soundOn: !get().soundOn }),
+  toggleLabels: () => set({ labelsOn: !get().labelsOn }),
+  setDetailsTucked: (detailsTucked) => {
+    set({ detailsTucked });
+    const id = get().selected;
+    get().requestCamera(detailsTucked || !id ? 'reset' : 'anatomy', detailsTucked || !id ? 'full' : id);
+  },
   select: (id, focus = true) => {
     const had = get().selected;
-    set({ selected: id });
+    set({ selected: id, detailsTucked: false });
     if (id && focus) get().requestCamera('anatomy', id);
     // closing the details returns the camera to the standard full view
     if (!id && had) get().requestCamera('reset', 'full');

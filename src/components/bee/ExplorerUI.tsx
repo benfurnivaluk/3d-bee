@@ -5,7 +5,7 @@ import { useBeeStore } from '@/store/beeExplorerStore';
 import type { QualitySetting } from '@/types/bee';
 import { AnatomyChips, AnatomyList, AnatomyPanel } from './AnatomyPanel';
 import { TextView } from './ui/TextView';
-import { IconExit, IconFullscreen, IconReset, IconSoundOff, IconSoundOn, IconText } from './ui/Icons';
+import { IconExit, IconFullscreen, IconReset, IconSoundOff, IconSoundOn, IconTags, IconText } from './ui/Icons';
 import { ambience } from '@/lib/ambience';
 import { Logo } from './ui/Logo';
 
@@ -116,6 +116,8 @@ function Hints() {
 
 export function ExplorerUI() {
   const textViewOpen = useBeeStore((s) => s.textViewOpen);
+  const labelsOn = useBeeStore((s) => s.labelsOn);
+  const toggleLabels = useBeeStore((s) => s.toggleLabels);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 flex flex-col">
@@ -123,6 +125,9 @@ export function ExplorerUI() {
         <Brand />
         <TopControls />
       </header>
+      <button type="button" className="btn-ghost bee-label-toggle pointer-events-auto" aria-pressed={labelsOn} onClick={toggleLabels}>
+        <IconTags width={16} height={16} /> {labelsOn ? 'Hide labels' : 'Show labels'}
+      </button>
 
       <div className="relative flex min-h-0 flex-1 items-start justify-between gap-4 px-4 sm:px-5">
         <div className="pointer-events-auto">

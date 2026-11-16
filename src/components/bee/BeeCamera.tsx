@@ -11,6 +11,7 @@ import { runtime } from '@/lib/runtime';
 import { FULL_VIEW } from '@/data/cameraPresets';
 import { ANATOMY_BY_ID } from '@/data/beeAnatomy';
 import type { AnatomyId } from '@/types/bee';
+import { mobileFraming } from '@/lib/framing';
 
 interface Goal {
   pos: THREE.Vector3;
@@ -31,6 +32,8 @@ export function BeeCamera() {
   const start = useRef({ pos: new THREE.Vector3(), target: new THREE.Vector3(), fov: DEFAULT_FOV });
   const keys = useRef(new Set<string>());
   const viewShift = useRef(0);
+  const verticalShift = useRef(0);
+  const initialized = useRef(false);
 
   const resolveGoal = (g: Goal, outPos: THREE.Vector3, outTarget: THREE.Vector3) => {
     const q = runtime.beeQuat;
@@ -54,22 +57,45 @@ export function BeeCamera() {
   };
 
   useEffect(() => {
+    const fullGoal = (): Goal => {
+      const state = useBeeStore.getState();
+      const scale =
+        size.width < 640
+          ? mobileFraming(size.width, size.height, !!state.selected && !state.detailsTucked).distanceScale
+          : Math.max(1, 0.95 / (size.width / size.height));
+      return { pos: new THREE.Vector3(...FULL_VIEW.position).multiplyScalar(scale), target: new THREE.Vector3(...FULL_VIEW.target), fov: DEFAULT_FOV };
+    };
     const handle = (req = useBeeStore.getState().camera) => {
       if (!req) return;
       if (req.kind === 'anatomy') {
+        // phones keep the whole bee in view above the details drawer
+        if (size.width < 640) {
+          fly(fullGoal());
+          return;
+        }
         const a = ANATOMY_BY_ID[req.id as AnatomyId];
         const dir = new THREE.Vector3(...a.view.offset).normalize().multiplyScalar(a.view.distance * 1.4);
         fly({ pos: dir, target: new THREE.Vector3(), anchor: a.id, fov: 34 });
       } else {
-        fly({ pos: new THREE.Vector3(...FULL_VIEW.position), target: new THREE.Vector3(...FULL_VIEW.target), fov: DEFAULT_FOV });
+        fly(fullGoal());
       }
     };
-    handle();
+    if (!initialized.current && controls.current) {
+      const initial = fullGoal();
+      resolveGoal(initial, camera.position, controls.current.target);
+      persp.fov = initial.fov;
+      persp.updateProjectionMatrix();
+      controls.current.update();
+      initialized.current = true;
+    } else {
+      handle(useBeeStore.getState().camera ?? { kind: 'reset', id: 'full', nonce: 0 });
+    }
     return useBeeStore.subscribe((s, prev) => {
       if (s.camera && s.camera !== prev.camera) handle(s.camera);
+      else if (size.width < 640 && (s.selected !== prev.selected || s.detailsTucked !== prev.detailsTucked)) fly(fullGoal());
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [size.width, size.height]);
 
   // keyboard: arrows orbit, +/- zoom, R resets
   useEffect(() => {
@@ -126,9 +152,13 @@ export function BeeCamera() {
 
     // keep the bee centred in the space left by the structure list (desktop) and the pop-out
     const w = size.width;
-    const want = (s.selected ? Math.min(136, w * 0.2) : 0) - (w >= 1024 ? 90 : 0);
-    viewShift.current += (want - viewShift.current) * Math.min(1, delta * 4);
-    if (Math.abs(viewShift.current) > 0.5) persp.setViewOffset(w, size.height, viewShift.current, 0, w, size.height);
+    const want = w < 640 ? 0 : (s.selected && !s.detailsTucked ? Math.min(136, w * 0.2) : 0) - (w >= 1024 ? 90 : 0);
+    const wantY = w < 640 ? mobileFraming(w, size.height, !!s.selected && !s.detailsTucked).offsetY : 0;
+    const blend = s.reducedMotion ? 1 : 1 - Math.exp(-5 * Math.min(delta, 0.05));
+    viewShift.current += (want - viewShift.current) * blend;
+    verticalShift.current += (wantY - verticalShift.current) * blend;
+    if (Math.abs(viewShift.current) > 0.5 || Math.abs(verticalShift.current) > 0.5)
+      persp.setViewOffset(w, size.height, viewShift.current, verticalShift.current, w, size.height);
     else if (persp.view) persp.clearViewOffset();
 
     c.update();
@@ -152,6 +182,7 @@ export function BeeCamera() {
         if (tween.current.k < 1) {
           gsap.killTweensOf(tween.current);
           tween.current.k = 1;
+          goal.current = null;
         }
       }}
     />

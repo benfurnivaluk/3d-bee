@@ -131,3 +131,9 @@ export const IconComb = (p: SVGProps<SVGSVGElement>) => (
     <path d="m8 3 4 2.3v4.6L8 12.2 4 9.9V5.3ZM16 3l4 2.3v4.6l-4 2.3-4-2.3V5.3ZM12 10l4 2.3v4.6L12 19.2l-4-2.3v-4.6Z" />
   </svg>
 );
+export const IconTags = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M3.5 5.5v5.2l8.8 8.8 6.7-6.7-8.8-8.8H5.5a2 2 0 0 0-2 1.5Z" />
+    <circle cx="7.75" cy="8.25" r="1.25" />
+  </svg>
+);

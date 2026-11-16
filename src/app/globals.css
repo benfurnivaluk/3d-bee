@@ -171,3 +171,69 @@ canvas:active {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- labels toggle, phone drawer ---------- */
+/* labels start hidden on every device; the toggle shows them all at once */
+.bee-explorer .bee-label-toggle {
+  display: inline-flex;
+  align-self: flex-start;
+  margin: 0 20px 12px;
+  min-height: 36px;
+  background: rgba(255, 255, 255, 0.85);
+}
+.bee-explorer[data-labels='false'] .marker {
+  display: none;
+}
+@media (max-width: 639px) {
+  .bee-explorer .bee-label-toggle {
+    position: absolute;
+    top: 60px;
+    left: 16px;
+    margin: 0;
+  }
+  .bee-explorer[data-labels='true'] .marker-label {
+    opacity: 0.9;
+    transform: none;
+  }
+  .bee-explorer .bee-scene-frame {
+    top: 96px;
+    bottom: 48px;
+  }
+  .bee-explorer[data-selected='true'] footer {
+    display: none;
+  }
+  .bee-explorer .popout {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    border-radius: 16px 16px 0 0;
+    border-right-width: 1px;
+    padding-top: 32px;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bee-explorer .popout .bee-details-content {
+    max-height: calc(50dvh - 32px - env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
+  }
+  .bee-explorer .popout-tab {
+    left: calc(50% - 32px);
+    top: 0;
+    width: 64px;
+    height: 32px;
+    transform: none;
+    border: 0;
+    border-radius: 0;
+    flex-direction: row;
+  }
+  .bee-explorer .popout-tab svg {
+    transform: rotate(90deg);
+  }
+  .bee-explorer .popout[data-tucked='true'] .popout-tab svg {
+    transform: rotate(-90deg);
+  }
+}
